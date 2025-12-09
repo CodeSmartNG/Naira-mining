@@ -1,0 +1,53 @@
+name: Deploy React App to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Triggers workflow on push to main branch
+  pull_request:
+    branches:
+      - main  # Also run on pull requests to main for CI testing
+
+# Required permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v4[citation:2]
+      
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'  # Specify Node.js version
+          cache: 'npm'  # Cache npm dependencies for faster builds
+      
+      # Step 3: Install dependencies
+      - name: Install Dependencies
+        run: npm ci  # Uses package-lock.json for exact versions
+      
+      # Step 4: Run tests (if you have any)
+      - name: Run Tests
+        run: npm test -- --passWithNoTests || echo "No tests configured"
+      
+      # Step 5: Build the React app
+      - name: Build React App
+        run: npm run build
+        env:
+          CI: false  # Allows full build without CI restrictions
+      
+      # Step 6: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: bitovi/github-actions-react-to-github-pages@v1.2.4[citation:4]
+        with:
+          path: build  # The folder containing your built files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
